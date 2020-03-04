@@ -1,0 +1,14 @@
+[package]
+name = "gameserver-sandbox-rs"
+version = "0.1.0"
+authors = ["momf <mail@ni-vg.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "*"
+uuid = "0.8.1"
+chrono = "0.4.10"
+sled = "0.31.0"
+byteorder = "1.3.4"
