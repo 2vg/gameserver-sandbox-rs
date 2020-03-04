@@ -1,5 +1,6 @@
 use anyhow::Result;
 use sled::Config;
+use uuid::Uuid;
 
 use crate::data;
 use crate::domain;
@@ -30,12 +31,27 @@ impl domain::repositories::Repository for Repository {
         Ok(domain::models::entities::Entity { id: result.id, pos: result.pos })
     }
 
-    fn update_pos(&self, entity: domain::models::entities::Entity, pos: (i32, i32)) -> Result<domain::models::entities::Entity> {
+    fn select_entity(&self, id: Uuid) -> Result<domain::models::entities::Entity> {
+        use data::models::entities::Entity;
+
+        let result = queries::entities::select_one(&self, id)?;
+
+        Ok(domain::models::entities::Entity { id: result.id, pos: result.pos })
+    }
+
+    fn update_entity(&self, id: Uuid, pos: (i32, i32)) -> Result<domain::models::entities::Entity> {
         use data::models::entities::UpdateEntity;
 
-        let entity = UpdateEntity{ id: entity.id, pos: pos };
+        let entity = UpdateEntity{ id: id, pos: pos };
         let result = queries::entities::update(&self, entity)?;
 
         Ok(domain::models::entities::Entity { id: result.id, pos: result.pos })
+    }
+
+    fn delete_entity(&self, entity: domain::models::entities::Entity) -> Result<()> {
+        use data::models::entities::Entity;
+
+        let entity = Entity{ id: entity.id, pos: entity.pos };
+        Ok(queries::entities::delete(&self, entity)?)
     }
 }
