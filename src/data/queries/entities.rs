@@ -1,12 +1,12 @@
 use anyhow::Result;
 
-use crate::data::Repo;
 use crate::data::models;
+use crate::data::repositories::Repository;
 
 use std::io::Cursor;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-pub fn insert(repo: &Repo, entity: models::entities::NewEntity) -> Result<models::entities::Entity> {
+pub fn insert(repo: &Repository, entity: models::entities::NewEntity) -> Result<models::entities::Entity> {
   use models::entities::Entity;
 
   let uuid = entity.id.as_bytes();
@@ -23,7 +23,7 @@ pub fn insert(repo: &Repo, entity: models::entities::NewEntity) -> Result<models
 // but if continue more implemention,
 // this function need transactional operation in the future.
 // for that reason, I'll keep it for now.
-pub fn update(repo: &Repo, entity: models::entities::UpdateEntity) -> Result<models::entities::Entity> {
+pub fn update(repo: &Repository, entity: models::entities::UpdateEntity) -> Result<models::entities::Entity> {
     use models::entities::Entity;
 
     let uuid = entity.id.as_bytes();
