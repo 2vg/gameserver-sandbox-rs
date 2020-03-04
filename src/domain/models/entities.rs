@@ -6,7 +6,11 @@ pub struct Entity {
 }
 
 impl Entity {
-    fn new(id: Uuid, pos: (i32, i32)) -> Entity {
+    pub fn new_with_empty() -> Entity {
+        Entity{ id: Uuid::new_v4(), pos: (0, 0) }
+    }
+
+    pub fn new(id: Uuid, pos: (i32, i32)) -> Entity {
         Entity{ id: id, pos: pos }
     }
 }

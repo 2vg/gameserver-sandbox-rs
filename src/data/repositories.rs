@@ -11,7 +11,7 @@ pub struct Repository {
 }
 
 impl Repository {
-    pub fn new(&self) -> Result<Repository> {
+    pub fn new() -> Result<Repository> {
         let config = Config::new().temporary(true);
         Ok(Repository { connection: config.open()? })
     }
