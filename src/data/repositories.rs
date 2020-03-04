@@ -31,7 +31,7 @@ impl domain::repositories::Repository for Repository {
         Ok(domain::models::entities::Entity { id: result.id, pos: result.pos })
     }
 
-    fn select_entity(&self, id: Uuid) -> Result<domain::models::entities::Entity> {
+    fn select_entity(&self, id: u32) -> Result<domain::models::entities::Entity> {
         use data::models::entities::Entity;
 
         let result = queries::entities::select_one(&self, id)?;
@@ -39,7 +39,7 @@ impl domain::repositories::Repository for Repository {
         Ok(domain::models::entities::Entity { id: result.id, pos: result.pos })
     }
 
-    fn update_entity(&self, id: Uuid, pos: (i32, i32)) -> Result<domain::models::entities::Entity> {
+    fn update_entity(&self, id: u32, pos: (i32, i32)) -> Result<domain::models::entities::Entity> {
         use data::models::entities::UpdateEntity;
 
         let entity = UpdateEntity{ id: id, pos: pos };
