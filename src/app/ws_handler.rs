@@ -13,33 +13,30 @@ use crate::app::game_server_actor as GameServerActor;
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-async fn ws_route<R: 'static + Repository>(
+async fn ws_route<R: std::marker::Unpin + 'static + Repository>(
     req: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<GameServerActor::GameServer>>,
-    data: web::Data<R>
+    srv: web::Data<Addr<GameServerActor::GameServer<R>>>
 ) -> Result<HttpResponse, Error> {
     ws::start(
         WsSession {
             id: 0,
             hb: Instant::now(),
             addr: srv.get_ref().clone(),
-            repo: data.get_ref().clone(),
         },
         &req,
         stream,
     )
 }
 
-struct WsSession<'r> {
+struct WsSession<R: std::marker::Unpin + 'static + Repository> {
     id: u32,
     hb: Instant,
-    repo: &'r Repository,
     /// Game server
-    addr: Addr<GameServerActor::GameServer>,
+    addr: Addr<GameServerActor::GameServer<R>>,
 }
 
-impl Actor for WsSession {
+impl<R: std::marker::Unpin + 'static + Repository> Actor for WsSession<R> {
     type Context = ws::WebsocketContext<Self>;
 
     // when client connected
@@ -49,7 +46,6 @@ impl Actor for WsSession {
         let addr = ctx.address();
         self.addr
             .send(GameServerActor::Connect {
-                repo: self.repo,
                 addr: addr.recipient(),
             })
             .into_actor(self)
@@ -65,12 +61,12 @@ impl Actor for WsSession {
 
     // when client disconnected
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        self.addr.do_send(GameServerActor::Disconnect { id: self.id, repo: self.repo });
+        self.addr.do_send(GameServerActor::Disconnect { id: self.id });
         Running::Stop
     }
 }
 
-impl Handler<GameServerActor::Message> for WsSession {
+impl<R: std::marker::Unpin + 'static + Repository> Handler<GameServerActor::Message> for WsSession<R> {
     type Result = ();
 
     fn handle(&mut self, msg: GameServerActor::Message, ctx: &mut Self::Context) {
@@ -78,7 +74,7 @@ impl Handler<GameServerActor::Message> for WsSession {
     }
 }
 
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
+impl<R: std::marker::Unpin + 'static + Repository> StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession<R> {
     fn handle(
         &mut self,
         msg: Result<ws::Message, ws::ProtocolError>,
@@ -106,7 +102,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                 self.addr.do_send(GameServerActor::ClientMessage {
                   id: self.id,
                   msg: m.to_string(),
-                  repo: self.repo
                 })
 
             }
@@ -122,12 +117,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
     }
 }
 
-impl WsSession {
+impl<R: std::marker::Unpin + 'static + Repository> WsSession<R> {
     fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 println!("Websocket Client heartbeat failed, disconnecting!");
-                act.addr.do_send(GameServerActor::Disconnect { id: act.id, repo: act.repo });
+                act.addr.do_send(GameServerActor::Disconnect { id: act.id });
                 ctx.stop();
                 return;
             }

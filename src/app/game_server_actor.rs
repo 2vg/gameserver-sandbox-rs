@@ -2,6 +2,7 @@ use actix::prelude::*;
 
 use crate::domain::models;
 use crate::domain::repositories::Repository;
+use crate::data::repositories::Repository as DataRepository;
 
 use std::collections::{HashMap, HashSet};
 
@@ -11,40 +12,30 @@ pub struct Message(pub String);
 
 #[derive(Message)]
 #[rtype(u32)]
-pub struct Connect<'r> {
-    pub repo: &'r Repository,
+pub struct Connect{
     pub addr: Recipient<Message>,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct Disconnect<'r> {
+pub struct Disconnect {
     pub id: u32,
-    pub repo: &'r Repository, 
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct ClientMessage<'r> {
+pub struct ClientMessage {
     pub id: u32,
     pub msg: String,
-    pub repo: &'r Repository, 
 }
 
-pub struct GameServer {
+pub struct GameServer<R: std::marker::Unpin + 'static + Repository> {
+    repo: R,
     sessions: HashMap<u32, Recipient<Message>>
 }
 
-impl Default for GameServer {
-    fn default() -> GameServer {
-        GameServer {
-            sessions: HashMap::new()
-        }
-    }
-}
-
-impl GameServer {
-    fn send_message(&self, repo: &Repository, my_id: u32, message: &str) {
+impl<R: std::marker::Unpin + 'static + Repository> GameServer<R> {
+    fn send_message(&self, my_id: u32, message: &str) {
         for (id, addr) in &self.sessions {
             if *id == my_id { continue }
             let _ = addr.do_send(Message(message.to_owned()));
@@ -52,22 +43,26 @@ impl GameServer {
     }
 }
 
-impl Actor for GameServer {
+impl<R: std::marker::Unpin + 'static + Repository> Actor for GameServer<R> {
     type Context = Context<Self>;
 }
 
-impl<'r> Handler<Connect<'r>> for GameServer {
+impl<R: std::marker::Unpin + 'static + Repository> Handler<Connect> for GameServer<R> {
     type Result = u32;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        let result = models::entities::Entity::new_with_empty();
-        //let result = msg.repo.create_entity(ent);
-        self.sessions.insert(result.id, msg.addr);
-        result.id
+        let ent = models::entities::Entity::new_with_empty();
+        if let Ok(result) = self.repo.create_entity(ent) {
+            self.sessions.insert(result.id, msg.addr);
+            result.id
+        }
+        else {
+            0
+        }
     }
 }
 
-impl<'r> Handler<Disconnect<'r>> for GameServer {
+impl<R: std::marker::Unpin + 'static + Repository> Handler<Disconnect> for GameServer<R> {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
@@ -75,10 +70,10 @@ impl<'r> Handler<Disconnect<'r>> for GameServer {
     }
 }
 
-impl<'r> Handler<ClientMessage<'r>> for GameServer {
+impl<R: std::marker::Unpin + 'static + Repository> Handler<ClientMessage> for GameServer<R> {
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
-        self.send_message(msg.repo, msg.id, msg.msg.as_str());
+        self.send_message(msg.id, msg.msg.as_str());
     }
 }
