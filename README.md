@@ -10,4 +10,14 @@ Cuz a very simple implementation, an Entity has only a unique ID and position da
 
 However, cuz the DDD architecture,  so probably easily extensible.
 
-## wip
+## contribute
+
+I am still new to Rust and DDD.
+
+so, Any PR is welcome!
+
+## Todo
+- create index route
+- put html file for View
+- Process to actually CRUD the Entity, at this time GameServer does not process the Entity yet
+- Refactor(I don't know if this is necessary, the initial goal is to create a small game server, not to write good code.)
