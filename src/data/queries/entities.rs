@@ -49,9 +49,9 @@ pub fn update(repo: &Repository, entity: UpdateEntity) -> Result<Entity> {
     Ok(Entity { id: entity.id, pos: entity.pos })
 }
 
-pub fn delete(repo: &Repository, entity: Entity) -> Result<()> {
+pub fn delete(repo: &Repository, id: u32) -> Result<()> {
     let mut b_id = vec![];
-    b_id.write_u32::<LittleEndian>(entity.id)?;
+    b_id.write_u32::<LittleEndian>(id)?;
 
     repo.conn().remove(b_id)?;
 

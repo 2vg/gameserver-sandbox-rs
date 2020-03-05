@@ -764,6 +764,8 @@ dependencies = [
  "byteorder",
  "chrono",
  "rand",
+ "serde",
+ "serde_json",
  "sled",
  "uuid",
 ]
