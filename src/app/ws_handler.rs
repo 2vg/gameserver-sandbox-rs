@@ -13,7 +13,7 @@ use crate::app::game_server_actor as GameServerActor;
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-async fn ws_route<R: std::marker::Unpin + 'static + Repository>(
+pub async fn ws_route<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone>(
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<GameServerActor::GameServer<R>>>
@@ -29,14 +29,14 @@ async fn ws_route<R: std::marker::Unpin + 'static + Repository>(
     )
 }
 
-struct WsSession<R: std::marker::Unpin + 'static + Repository> {
+struct WsSession<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> {
     id: u32,
     hb: Instant,
     /// Game server
     addr: Addr<GameServerActor::GameServer<R>>,
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> Actor for WsSession<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Actor for WsSession<R> {
     type Context = ws::WebsocketContext<Self>;
 
     // when client connected
@@ -66,7 +66,7 @@ impl<R: std::marker::Unpin + 'static + Repository> Actor for WsSession<R> {
     }
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> Handler<GameServerActor::Message> for WsSession<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Handler<GameServerActor::Message> for WsSession<R> {
     type Result = ();
 
     fn handle(&mut self, msg: GameServerActor::Message, ctx: &mut Self::Context) {
@@ -74,7 +74,7 @@ impl<R: std::marker::Unpin + 'static + Repository> Handler<GameServerActor::Mess
     }
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession<R> {
     fn handle(
         &mut self,
         msg: Result<ws::Message, ws::ProtocolError>,
@@ -117,7 +117,7 @@ impl<R: std::marker::Unpin + 'static + Repository> StreamHandler<Result<ws::Mess
     }
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> WsSession<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> WsSession<R> {
     fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {

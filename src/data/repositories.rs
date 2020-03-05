@@ -6,6 +6,7 @@ use crate::data;
 use crate::domain;
 use crate::data::queries;
 
+#[derive(Clone, Debug)]
 pub struct Repository {
     connection: sled::Db
 }

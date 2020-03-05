@@ -1,18 +1,15 @@
 extern crate gameserver_sandbox_rs as sandbox;
 
 use anyhow::*;
+use actix_rt::*;
 
 use sandbox::domain::models::entities::Entity;
 use sandbox::data::repositories::Repository;
 
 use sandbox::app::server;
-use sandbox::app::example;
 
-fn main() -> Result<()> {
-    let repo = Repository::new()?;
-    let example_app = server::new_app(repo);
-
-    example::run_example_app(example_app)?;
-
-    Ok(())
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    let repo = Repository::new().unwrap();
+    server::start_server(repo).await
 }

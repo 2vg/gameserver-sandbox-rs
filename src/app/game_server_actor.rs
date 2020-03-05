@@ -29,12 +29,19 @@ pub struct ClientMessage {
     pub msg: String,
 }
 
-pub struct GameServer<R: std::marker::Unpin + 'static + Repository> {
+pub struct GameServer<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> {
     repo: R,
     sessions: HashMap<u32, Recipient<Message>>
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> GameServer<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> GameServer<R> {
+    pub fn new(repo: R) -> GameServer<R> {
+        GameServer {
+            repo: repo,
+            sessions: HashMap::new()
+        }
+    }
+
     fn send_message(&self, my_id: u32, message: &str) {
         for (id, addr) in &self.sessions {
             if *id == my_id { continue }
@@ -43,11 +50,11 @@ impl<R: std::marker::Unpin + 'static + Repository> GameServer<R> {
     }
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> Actor for GameServer<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Actor for GameServer<R> {
     type Context = Context<Self>;
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> Handler<Connect> for GameServer<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Handler<Connect> for GameServer<R> {
     type Result = u32;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
@@ -62,7 +69,7 @@ impl<R: std::marker::Unpin + 'static + Repository> Handler<Connect> for GameServ
     }
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> Handler<Disconnect> for GameServer<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Handler<Disconnect> for GameServer<R> {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
@@ -70,7 +77,7 @@ impl<R: std::marker::Unpin + 'static + Repository> Handler<Disconnect> for GameS
     }
 }
 
-impl<R: std::marker::Unpin + 'static + Repository> Handler<ClientMessage> for GameServer<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Handler<ClientMessage> for GameServer<R> {
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
