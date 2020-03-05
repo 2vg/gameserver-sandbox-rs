@@ -1,12 +1,9 @@
 use actix::prelude::*;
-use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
-use rand::random;
 
-use std::sync::*;
 use std::time::{Duration, Instant};
 
-use crate::app::context::Context;
 use crate::domain::repositories::Repository;
 use crate::app::game_server_actor as GameServerActor;
 
@@ -41,6 +38,7 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> A
 
     // when client connected
     fn started(&mut self, ctx: &mut Self::Context) {
+        println!("connected");
         self.hb(ctx);
 
         let addr = ctx.address();
@@ -97,6 +95,7 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> S
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
+                println!("recv msg");
                 let m = text.trim();
 
                 self.addr.do_send(GameServerActor::ClientMessage {

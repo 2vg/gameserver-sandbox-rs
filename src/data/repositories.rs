@@ -1,6 +1,5 @@
 use anyhow::Result;
 use sled::Config;
-use uuid::Uuid;
 
 use crate::data;
 use crate::domain;
@@ -33,8 +32,6 @@ impl domain::repositories::Repository for Repository {
     }
 
     fn select_entity(&self, id: u32) -> Result<domain::models::entities::Entity> {
-        use data::models::entities::Entity;
-
         let result = queries::entities::select_one(&self, id)?;
 
         Ok(domain::models::entities::Entity { id: result.id, pos: result.pos })

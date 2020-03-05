@@ -2,9 +2,8 @@ use actix::prelude::*;
 
 use crate::domain::models;
 use crate::domain::repositories::Repository;
-use crate::data::repositories::Repository as DataRepository;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(Message)]
 #[rtype(result = "()")]

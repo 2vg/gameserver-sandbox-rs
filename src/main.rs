@@ -1,9 +1,7 @@
 extern crate gameserver_sandbox_rs as sandbox;
 
-use anyhow::*;
 use actix_rt::*;
 
-use sandbox::domain::models::entities::Entity;
 use sandbox::data::repositories::Repository;
 
 use sandbox::app::server;

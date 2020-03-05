@@ -1,5 +1,3 @@
-use rand::random;
-
 #[derive(Clone, Debug)]
 pub struct Entity {
     pub id: u32,
