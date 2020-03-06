@@ -43,7 +43,7 @@ pos is the position data of the Entity, and the client draws another Entity base
 
 When the client connects to the game server, the game server creates a new Entity with `pos: (0, 0)`.
 
-Next, register the `id` in the game server session list and send the entity data to all other clients.
+Next, register the `id` in the game server session list and send the `id` to ownself and the entity data to all other clients.
 
 ### # when entity updated
 
