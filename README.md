@@ -38,12 +38,11 @@ The `id` is randomly generated and shared as the ws session ID and Entity unique
 
 pos is the position data of the Entity, and the client draws another Entity based on `pos`.
 
-
 ### # when client connected
 
 When the client connects to the game server, the game server creates a new Entity with `pos: (0, 0)`.
 
-Next, register the `id` in the game server session list and send the `id` to ownself and the entity data to all other clients.
+Next, register the `id` in the game server session list and send the `id` and other client entities data to ownself and the entity data to all other clients.
 
 ### # when entity updated
 
