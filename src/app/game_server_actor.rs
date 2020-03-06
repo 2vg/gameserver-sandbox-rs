@@ -61,26 +61,21 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
         let ent = models::entities::Entity::new_with_empty();
-        if let Ok(ent) = self.repo.create_entity(ent) {
-            self.sessions.insert(ent.id, msg.addr);
-            let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
+        if let Ok(new_ent) = self.repo.create_entity(ent) {
+            let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", new_ent.id, new_ent.pos.0, new_ent.pos.1);
             // need to know the unique ID, will send only the id.
-            if let Some(addr) = self.sessions.get(&ent.id) {
-                let _ = addr.do_send(Message(ent.id.to_string()));
+            let _ = msg.addr.do_send(Message(new_ent.id.to_string()));
 
-                for (id, addr) in &self.sessions {
-                    // no need send data to ownself client
-                    if *id == ent.id { continue };
-
-                    // If have a client other than self when connect, need the Entity data.
-                    if let Ok(ent) = self.repo.select_entity(*id) {
-                        let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
-                        let _ = addr.do_send(Message(j));
-                    }
+            // If have a client other than self when connect, need the Entity data.
+            for (id, _) in &self.sessions {
+                if let Ok(ent) = self.repo.select_entity(*id) {
+                    let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
+                    let _ = msg.addr.do_send(Message(j));
                 }
-            };
-            self.send_message(ent.id, &j);
-            ent.id
+            }
+            self.sessions.insert(new_ent.id, msg.addr);
+            self.send_message(new_ent.id, &j);
+            new_ent.id
         }
         else {
             0
