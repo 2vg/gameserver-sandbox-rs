@@ -61,9 +61,11 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
         let ent = models::entities::Entity::new_with_empty();
-        if let Ok(result) = self.repo.create_entity(ent) {
-            self.sessions.insert(result.id, msg.addr);
-            result.id
+        if let Ok(ent) = self.repo.create_entity(ent) {
+            self.sessions.insert(ent.id, msg.addr);
+            let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
+            self.send_message(ent.id, &j);
+            ent.id
         }
         else {
             0
@@ -108,5 +110,3 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
         };
     }
 }
-
-
