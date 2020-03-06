@@ -44,28 +44,11 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> G
     }
 
     fn send_message(&self, my_id: u32, message: &str) {
-        match serde_json::from_str::<Value>(message) {
-            Ok(value) => {
-                // first, need old
-                if let Ok(mut ent) = self.repo.select_entity(my_id) {
-                    // if found, update ent.pos
-                    let x = &ent.pos.0 + (*&value["x"].as_i64().unwrap() as i32);
-                    let y = &ent.pos.1 + (*&value["y"].as_i64().unwrap() as i32);
-                    ent.pos.0 = x;
-                    ent.pos.1 = y;
-
-                    if let Ok(_) = self.repo.update_entity(ent) {
-                        let j = format!("{{\"x\":{},\"y\"{}}}", x, y);
-                        for (id, addr) in &self.sessions {
-                            // no need send new pos to ownself client
-                            if *id == my_id { continue };
-                            let _ = addr.do_send(Message(j.to_owned()));
-                        }
-                    };
-                };
-            },
-            Err(_) => { },
-        };
+        for (id, addr) in &self.sessions {
+            // no need send new pos to ownself client
+            if *id == my_id { continue };
+            let _ = addr.do_send(Message(message.to_owned()));
+        }
     }
 }
 
@@ -93,6 +76,10 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
         let _ = self.repo.delete_entity(msg.id);
+        // when delete entity, send {id: ent.id, x: -1, y: -1} to all client
+        // then client can delete entity from screen with this data
+        let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", msg.id, -1, -1);
+        self.send_message(msg.id, &j);
         self.sessions.remove(&msg.id);
     }
 }
@@ -101,7 +88,24 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
-        self.send_message(msg.id, msg.msg.as_str());
+        match serde_json::from_str::<Value>(&msg.msg) {
+            Ok(value) => {
+                // first, need old
+                if let Ok(mut ent) = self.repo.select_entity(msg.id) {
+                    // if found, update ent.pos
+                    let x = &ent.pos.0 + (*&value["x"].as_i64().unwrap() as i32);
+                    let y = &ent.pos.1 + (*&value["y"].as_i64().unwrap() as i32);
+                    ent.pos.0 = x;
+                    ent.pos.1 = y;
+
+                    if let Ok(ent) = self.repo.update_entity(ent) {
+                        let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
+                        self.send_message(msg.id, &j);
+                    };
+                };
+            },
+            Err(_) => { },
+        };
     }
 }
 
