@@ -65,9 +65,10 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
             self.sessions.insert(ent.id, msg.addr);
             let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
             // need to know the unique ID, will send only the id.
-            if let Some(addr) = self.sessions.get(msg.id) {
-                let _ = addr.do_send(Message(msg.id.to_string()));
+            if let Some(addr) = self.sessions.get(&ent.id) {
+                let _ = addr.do_send(Message(ent.id.to_string()));
             };
+            self.send_message(0, &j);
             ent.id
         }
         else {
