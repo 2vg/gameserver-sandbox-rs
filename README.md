@@ -10,6 +10,12 @@ Cuz a very simple implementation, an Entity has only a unique ID and position da
 
 However, cuz the DDD architecture,  so probably easily extensible.
 
+## Purpose
+
+Study of actix, sled, DDD architecture.
+
+The purpose is not to make a full-fledged game server.
+
 ## contribute
 
 I am still new to Rust and DDD.
