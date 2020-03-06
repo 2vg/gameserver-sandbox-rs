@@ -68,7 +68,7 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
             if let Some(addr) = self.sessions.get(&ent.id) {
                 let _ = addr.do_send(Message(ent.id.to_string()));
             };
-            self.send_message(0, &j);
+            self.send_message(ent.id, &j);
             ent.id
         }
         else {
