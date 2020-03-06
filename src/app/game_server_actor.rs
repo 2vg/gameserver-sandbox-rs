@@ -67,6 +67,17 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
             // need to know the unique ID, will send only the id.
             if let Some(addr) = self.sessions.get(&ent.id) {
                 let _ = addr.do_send(Message(ent.id.to_string()));
+
+                for (id, addr) in &self.sessions {
+                    // no need send data to ownself client
+                    if *id == ent.id { continue };
+
+                    // If have a client other than self when connect, need the Entity data.
+                    if let Ok(ent) = self.repo.select_entity(*id) {
+                        let j = format!("{{\"id\":{}, \"x\":{},\"y\"{}}}", ent.id, ent.pos.0, ent.pos.1);
+                        let _ = addr.do_send(Message(j));
+                    }
+                }
             };
             self.send_message(ent.id, &j);
             ent.id
