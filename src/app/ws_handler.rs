@@ -4,8 +4,8 @@ use actix_web_actors::ws;
 
 use std::time::{Duration, Instant};
 
-use crate::domain::repositories::Repository;
 use crate::app::game_server_actor as GameServerActor;
+use crate::domain::repositories::Repository;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -13,7 +13,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 pub async fn ws_route<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone>(
     req: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<GameServerActor::GameServer<R>>>
+    srv: web::Data<Addr<GameServerActor::GameServer<R>>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
         WsSession {
@@ -33,7 +33,9 @@ struct WsSession<R: std::marker::Unpin + std::marker::Send + 'static + Repositor
     addr: Addr<GameServerActor::GameServer<R>>,
 }
 
-impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Actor for WsSession<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Actor
+    for WsSession<R>
+{
     type Context = ws::WebsocketContext<Self>;
 
     // when client connected
@@ -59,12 +61,15 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> A
 
     // when client disconnected
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        self.addr.do_send(GameServerActor::Disconnect { id: self.id });
+        self.addr
+            .do_send(GameServerActor::Disconnect { id: self.id });
         Running::Stop
     }
 }
 
-impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> Handler<GameServerActor::Message> for WsSession<R> {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone>
+    Handler<GameServerActor::Message> for WsSession<R>
+{
     type Result = ();
 
     fn handle(&mut self, msg: GameServerActor::Message, ctx: &mut Self::Context) {
@@ -72,12 +77,10 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> H
     }
 }
 
-impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession<R> {
-    fn handle(
-        &mut self,
-        msg: Result<ws::Message, ws::ProtocolError>,
-        ctx: &mut Self::Context,
-    ) {
+impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone>
+    StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession<R>
+{
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
             Err(_) => {
                 ctx.stop();
@@ -99,10 +102,9 @@ impl<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone> S
                 let m = text.trim();
 
                 self.addr.do_send(GameServerActor::ClientMessage {
-                  id: self.id,
-                  msg: m.to_string(),
+                    id: self.id,
+                    msg: m.to_string(),
                 })
-
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(_) => {

@@ -3,8 +3,8 @@ use anyhow::*;
 use crate::data::models::entities::*;
 use crate::data::repositories::Repository;
 
-use std::io::Cursor;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use std::io::Cursor;
 
 pub fn insert(repo: &Repository, entity: NewEntity) -> Result<Entity> {
     let mut id = vec![];
@@ -15,7 +15,10 @@ pub fn insert(repo: &Repository, entity: NewEntity) -> Result<Entity> {
 
     repo.conn().insert(id, position)?;
 
-    Ok(Entity { id: entity.id, pos: entity.pos })
+    Ok(Entity {
+        id: entity.id,
+        pos: entity.pos,
+    })
 }
 
 pub fn select_one(repo: &Repository, id: u32) -> Result<Entity> {
@@ -26,9 +29,11 @@ pub fn select_one(repo: &Repository, id: u32) -> Result<Entity> {
         let mut position = Cursor::new(result);
         let pos_x = position.read_i32::<LittleEndian>()?;
         let pos_y = position.read_i32::<LittleEndian>()?;
-        Ok(Entity { id: id, pos: (pos_x, pos_y) })
-    }
-    else {
+        Ok(Entity {
+            id: id,
+            pos: (pos_x, pos_y),
+        })
+    } else {
         Err(anyhow!("entity not found."))
     }
 }
@@ -46,7 +51,10 @@ pub fn update(repo: &Repository, entity: UpdateEntity) -> Result<Entity> {
 
     repo.conn().insert(id, position)?;
 
-    Ok(Entity { id: entity.id, pos: entity.pos })
+    Ok(Entity {
+        id: entity.id,
+        pos: entity.pos,
+    })
 }
 
 pub fn delete(repo: &Repository, id: u32) -> Result<()> {
