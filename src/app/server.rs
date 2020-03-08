@@ -1,10 +1,14 @@
 use actix::prelude::*;
 use actix_web::{web, App, HttpServer};
 
-use crate::domain::repositories::Repository;
 use crate::app::ws_handler;
+use crate::domain::repositories::Repository;
 
-pub async fn start_server<R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone>(repository: R) -> std::io::Result<()> {
+pub async fn start_server<
+    R: std::marker::Unpin + std::marker::Send + 'static + Repository + Clone,
+>(
+    repository: R,
+) -> std::io::Result<()> {
     let server = crate::app::game_server_actor::GameServer::new(repository).start();
     HttpServer::new(move || {
         App::new()

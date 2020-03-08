@@ -10,10 +10,10 @@ pub struct Entity {
 
 pub struct NewEntity {
     pub id: u32,
-    pub pos: (i32, i32)
+    pub pos: (i32, i32),
 }
 
 pub struct UpdateEntity {
     pub id: u32,
-    pub pos: (i32, i32)
+    pub pos: (i32, i32),
 }
